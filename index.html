@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<!-- saved from url=(0143)file:///private/var/folders/bb/trnp1h_s63g_2ypzvsnk48gc0000gn/T/remote-file-preview-F8BCDA3A-C388-4DFA-AD2D-63DF773A8358/paddleocr_browser.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaddleOCR In‑Browser Demo (Detection + Recognition)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: linear-gradient(135deg, #d4c5b9 0%, #c9b8a8 50%, #b8a394 100%);
+      color: #5a4a3a;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #8b7355 0%, #6d5d4a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    body > p {
+      color: #7a6a5a;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+    .panel {
+      flex: 1 1 360px;
+      min-width: 320px;
+      background: rgba(240, 235, 228, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(139, 115, 85, 0.2);
+      box-shadow: 0 8px 32px rgba(90, 74, 58, 0.15);
+      padding: 1.5rem;
+      overflow: hidden;
+    }
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: #8b7355;
+      letter-spacing: 0.5px;
+    }
+    #imageCanvas {
+      width: 100%;
+      border: 1px solid rgba(139, 115, 85, 0.3);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      background: #f5f1ed;
+    }
+    #resultTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    #resultTable th, #resultTable td {
+      border-bottom: 1px solid rgba(139, 115, 85, 0.15);
+      padding: 0.5rem;
+      text-align: left;
+    }
+    #resultTable th {
+      background: rgba(139, 115, 85, 0.1);
+      color: #8b7355;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-weight: 500;
+    }
+    #resultTable td {
+      color: #6a5a4a;
+    }
+    #status {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      background: rgba(139, 115, 85, 0.15);
+      color: #8b7355;
+      border: 1px solid rgba(139, 115, 85, 0.25);
+      font-weight: 500;
+    }
+    #progress {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #9a8a7a;
+    }
+    textarea {
+      width: 100%;
+      height: 160px;
+      resize: vertical;
+      border: 1px solid rgba(139, 115, 85, 0.3);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      background: rgba(250, 247, 243, 0.7);
+      color: #5a4a3a;
+      transition: border-color 0.3s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #8b7355;
+    }
+    label {
+      margin-right: 1rem;
+      font-size: 0.875rem;
+      color: #7a6a5a;
+      font-weight: 500;
+    }
+    input[type="file"] {
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(139, 115, 85, 0.3);
+      background: rgba(250, 247, 243, 0.5);
+      color: #5a4a3a;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    input[type="file"]:hover {
+      background: rgba(250, 247, 243, 0.8);
+      border-color: #8b7355;
+    }
+    button {
+      font-size: 0.875rem;
+      padding: 0.5rem 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #8b7355;
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.1) 0%, rgba(109, 93, 74, 0.1) 100%);
+      color: #8b7355;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    button:not(:disabled):hover {
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.2) 0%, rgba(109, 93, 74, 0.2) 100%);
+      box-shadow: 0 4px 15px rgba(139, 115, 85, 0.25);
+      transform: translateY(-1px);
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: rgba(180, 170, 160, 0.1);
+      border-color: rgba(180, 170, 160, 0.3);
+      color: #a09080;
+    }
+    button.processing {
+      background: linear-gradient(135deg, #a89678 0%, #8b7355 100%);
+      color: #f5f1ed;
+      border-color: #8b7355;
+      box-shadow: 0 4px 20px rgba(139, 115, 85, 0.4);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(139, 115, 85, 0.4); }
+      50% { box-shadow: 0 4px 25px rgba(139, 115, 85, 0.6); }
+    }
+  </style>
+</head>
+<body>
+  <h1>PaddleOCR In‑Browser Demo (PP‑OCRv5 det + rec)</h1>
+  <p>
+    上傳一張圖片，按下「偵測文字」即可在瀏覽器內部執行 PaddleOCR 的<strong>文字框偵測</strong>與<strong>文字辨識</strong>。模型與字典將下載一次後快取於 IndexedDB。
+  </p>
+  <div class="panel">
+    <label>選擇圖片：<input type="file" id="imageInput" accept="image/*"></label>
+    <button id="runButton" disabled="">偵測文字</button>
+    <span id="status">模型載入失敗</span>
+    <span id="progress"></span>
+  </div>
+  <div class="container">
+    <div class="panel">
+      <h2>預覽與文字框</h2>
+      <canvas id="imageCanvas"></canvas>
+    </div>
+    <div class="panel">
+      <h2>辨識結果（整張）</h2>
+      <textarea id="fullText" placeholder="辨識出的文字會出現在這裡"></textarea>
+    </div>
+  </div>
+  <div class="panel" style="margin-top: 1rem;">
+    <h2>逐框結果</h2>
+    <div style="overflow-y:auto; max-height:300px;">
+      <table id="resultTable">
+        <thead>
+          <tr><th>#</th><th>文字</th><th>信心</th><th>坐標 (x0, y0, x1, y1)</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- onnxruntime-web from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <!-- OpenCV.js for post-processing DBNet maps (contours) -->
+  <script async="" src="./assets/opencv.js"></script>
+  <script>
+    // URLs to download models and dictionary
+    const DET_MODEL_URL = 'https://huggingface.co/marsena/paddleocr-onnx-models/resolve/main/PP-OCRv5_server_det_infer.onnx';
+    const REC_MODEL_URL = 'https://huggingface.co/marsena/paddleocr-onnx-models/resolve/main/PP-OCRv5_server_rec_infer.onnx';
+    const DICT_URL     = 'https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/main/ppocr/utils/dict/ppocrv5_dict.txt';
+
+    // IDB keys
+    const DB_NAME   = 'paddleocr_models_db';
+    const STORE_NAME= 'models_store';
+    const DET_KEY   = 'detModel';
+    const REC_KEY   = 'recModel';
+    const DICT_KEY  = 'charDict';
+
+    // Global variables
+    let detSession = null;
+    let recSession = null;
+    let charDict   = [];
+    let cvReady    = false;
+    let ortReady   = false;
+    let modelsReady= false;
+
+    const imageInput = document.getElementById('imageInput');
+    const runButton  = document.getElementById('runButton');
+    const statusSpan = document.getElementById('status');
+    const progressSpan = document.getElementById('progress');
+    const canvas     = document.getElementById('imageCanvas');
+    const fullTextTa = document.getElementById('fullText');
+    const resultTableBody = document.querySelector('#resultTable tbody');
+    const ctx = canvas.getContext('2d');
+    let imgElement = null;
+    let originalImage = null; // Image bitmap for original dimensions
+
+    // ------- IndexedDB helper functions -------
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onerror = (event) => {
+          reject(event.target.error);
+        };
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+      });
+    }
+
+    async function idbGet(key) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => resolve(null);
+      });
+    }
+
+    async function idbSet(key, value) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.put(value, key);
+        request.onsuccess = () => resolve(true);
+        request.onerror = (e) => reject(e);
+      });
+    }
+
+    // Fetch model/dict and cache to IDB
+    async function fetchAndCache(url, key) {
+      try {
+        const resp = await fetch(url);
+        const buf = await resp.arrayBuffer();
+        await idbSet(key, buf);
+        return buf;
+      } catch (e) {
+        console.error('Failed to fetch model/dict', key, e);
+        throw e;
+      }
+    }
+
+    async function getModelBytes(key, url) {
+      let buf = await idbGet(key);
+      if (!buf) {
+        statusSpan.textContent = `下載模型 ${key}...`;
+        buf = await fetchAndCache(url, key);
+      }
+      return buf;
+    }
+
+    async function getDict() {
+      let txt = await idbGet(DICT_KEY);
+      
+      // Debug: check what type txt is
+      console.log('Dict from cache - type:', typeof txt);
+      console.log('Dict is ArrayBuffer?', txt instanceof ArrayBuffer);
+      
+      // If txt is ArrayBuffer (from old cache), convert to string
+      if (txt instanceof ArrayBuffer) {
+        console.log('Converting ArrayBuffer to string...');
+        const decoder = new TextDecoder('utf-8');
+        txt = decoder.decode(txt);
+      }
+      
+      // Check if dictionary is valid (should have thousands of characters)
+      if (txt) {
+        const tempDict = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
+        console.log('Cached dictionary length:', tempDict.length);
+        
+        // If cached dict is too small, force re-download
+        if (tempDict.length < 100) {
+          console.warn('Cached dictionary is too small, forcing re-download...');
+          txt = null;
+        }
+      }
+      
+      // If no valid cache, download fresh
+      if (!txt) {
+        statusSpan.textContent = '下載字典...';
+        console.log('Downloading dictionary from:', DICT_URL);
+        const resp = await fetch(DICT_URL);
+        txt = await resp.text();
+        console.log('Downloaded text length:', txt.length);
+        await idbSet(DICT_KEY, txt);
+      }
+      
+      // Split dictionary lines and remove empty entries
+      charDict = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
+      console.log('Dictionary loaded successfully!');
+      console.log('Total characters:', charDict.length);
+      console.log('First 10 chars:', charDict.slice(0, 10));
+      console.log('Last 10 chars:', charDict.slice(-10));
+      
+      // Validate dictionary size
+      if (charDict.length < 100) {
+        console.error('ERROR: Dictionary is too small! Only', charDict.length, 'characters');
+        throw new Error('字典載入失敗：字元數量太少');
+      }
+    }
+
+    // Load models
+    async function initModels() {
+      try {
+        const [detBuf, recBuf] = await Promise.all([
+          getModelBytes(DET_KEY, DET_MODEL_URL),
+          getModelBytes(REC_KEY, REC_MODEL_URL)
+        ]);
+
+        // Determine execution providers: prefer WebGPU if available, otherwise WASM
+        const providers = [];
+        if (typeof navigator !== 'undefined' && navigator.gpu) {
+          providers.push('webgpu');
+        }
+        // WebGL is slower for large models; WASM is fallback
+        providers.push('wasm');
+
+        statusSpan.textContent = '載入模型...';
+        detSession = await ort.InferenceSession.create(detBuf, {
+          executionProviders: providers,
+          graphOptimizationLevel: 'all'
+        });
+        recSession = await ort.InferenceSession.create(recBuf, {
+          executionProviders: providers,
+          graphOptimizationLevel: 'all'
+        });
+        await getDict();
+        modelsReady = true;
+        statusSpan.textContent = '模型載入完成';
+        maybeEnableRun();
+      } catch (e) {
+        console.error('模型初始化失敗', e);
+        statusSpan.textContent = '模型載入失敗';
+      }
+    }
+
+    // Wait for OpenCV.js ready
+    const cvReadyPromise = new Promise((resolve) => {
+      if (typeof cv !== 'undefined' && cv.onRuntimeInitialized) {
+        cv.onRuntimeInitialized = () => {
+          cvReady = true;
+          resolve();
+          maybeEnableRun();
+        };
+      } else {
+        // If cv is already ready
+        cvReady = true;
+        resolve();
+      }
+    });
+
+    // Check if we can enable the run button
+    function maybeEnableRun() {
+      if (modelsReady && cvReady && imgElement) {
+        runButton.disabled = false;
+      }
+    }
+
+    // Preprocess image for detection: resize to multiples of 32 and convert to CHW float32
+    function preprocessForDet(imgBitmap) {
+      const origW = imgBitmap.width;
+      const origH = imgBitmap.height;
+      const newW = Math.ceil(origW / 32) * 32;
+      const newH = Math.ceil(origH / 32) * 32;
+      // Create offscreen canvas
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = newW;
+      offCanvas.height = newH;
+      const offCtx = offCanvas.getContext('2d');
+      // Fill white background
+      offCtx.fillStyle = '#ffffff';
+      offCtx.fillRect(0, 0, newW, newH);
+      // Draw scaled image (stretch to fit)
+      offCtx.drawImage(imgBitmap, 0, 0, newW, newH);
+      const imageData = offCtx.getImageData(0, 0, newW, newH).data;
+      // Convert to Float32Array CHW
+      const floatArray = new Float32Array(3 * newH * newW);
+      const mean = [0.5, 0.5, 0.5];
+      const std  = [0.5, 0.5, 0.5];
+      for (let y = 0; y < newH; y++) {
+        for (let x = 0; x < newW; x++) {
+          const idx = (y * newW + x) * 4;
+          // Note: input order is R,G,B; output order is CHW
+          const r = imageData[idx] / 255;
+          const g = imageData[idx + 1] / 255;
+          const b = imageData[idx + 2] / 255;
+          floatArray[0 * newH * newW + y * newW + x] = (r - mean[0]) / std[0];
+          floatArray[1 * newH * newW + y * newW + x] = (g - mean[1]) / std[1];
+          floatArray[2 * newH * newW + y * newW + x] = (b - mean[2]) / std[2];
+        }
+      }
+      return { floatArray, newW, newH, origW, origH };
+    }
+
+    // Postprocess detection output: threshold + dilate + find contours
+    function extractBoxes(detOut, detW, detH, outW, outH) {
+      // detOut: Float32Array of shape [outH, outW]
+      // Compute binary mask from score map
+      const threshold = 0.3;
+      const binData = new Uint8Array(outH * outW);
+      for (let i = 0; i < outH * outW; i++) {
+        const val = detOut[i];
+        binData[i] = val >= threshold ? 255 : 0;
+      }
+      // Convert to cv.Mat
+      const mat = cv.matFromArray(outH, outW, cv.CV_8UC1, binData);
+      // Morphological dilation to connect text regions
+      const kernel = cv.Mat.ones(3, 3, cv.CV_8UC1);
+      cv.dilate(mat, mat, kernel, new cv.Point(-1, -1), 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+      // Find contours
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+      cv.findContours(mat, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+      const boxes = [];
+      const ratioX = detW / outW;
+      const ratioY = detH / outH;
+      for (let i = 0; i < contours.size(); i++) {
+        const cnt = contours.get(i);
+        const rect = cv.boundingRect(cnt);
+        const x0 = rect.x * ratioX;
+        const y0 = rect.y * ratioY;
+        const x1 = (rect.x + rect.width) * ratioX;
+        const y1 = (rect.y + rect.height) * ratioY;
+        // Filter out tiny boxes
+        if (rect.width >= 5 && rect.height >= 5) {
+          boxes.push({ x0, y0, x1, y1 });
+        }
+        cnt.delete();
+      }
+      kernel.delete();
+      contours.delete();
+      hierarchy.delete();
+      mat.delete();
+      return boxes;
+    }
+
+    // Preprocess region for recognition: resize to recHeight x variable width, pad to fixed width
+    function preprocessForRec(regionCanvas, recHeight = 48, maxWidth = 320) {
+      const w = regionCanvas.width;
+      const h = regionCanvas.height;
+      const scale = recHeight / h;
+      let newW = Math.round(w * scale);
+      if (newW > maxWidth) newW = maxWidth;
+      // Create canvas for resized region
+      const canvas2 = document.createElement('canvas');
+      canvas2.width = maxWidth;
+      canvas2.height = recHeight;
+      const ctx2 = canvas2.getContext('2d');
+      // Fill white
+      ctx2.fillStyle = '#ffffff';
+      ctx2.fillRect(0, 0, maxWidth, recHeight);
+      ctx2.drawImage(regionCanvas, 0, 0, w, h, 0, 0, newW, recHeight);
+      // Get pixel data
+      const data = ctx2.getImageData(0, 0, maxWidth, recHeight).data;
+      // Normalization mean/std (same as detection for now)
+      const mean = [0.5, 0.5, 0.5];
+      const std = [0.5, 0.5, 0.5];
+      const outArr = new Float32Array(3 * recHeight * maxWidth);
+      for (let y = 0; y < recHeight; y++) {
+        for (let x = 0; x < maxWidth; x++) {
+          const idx = (y * maxWidth + x) * 4;
+          const r = data[idx] / 255;
+          const g = data[idx + 1] / 255;
+          const b = data[idx + 2] / 255;
+          outArr[0 * recHeight * maxWidth + y * maxWidth + x] = (r - mean[0]) / std[0];
+          outArr[1 * recHeight * maxWidth + y * maxWidth + x] = (g - mean[1]) / std[1];
+          outArr[2 * recHeight * maxWidth + y * maxWidth + x] = (b - mean[2]) / std[2];
+        }
+      }
+      return { outArr, newW };
+    }
+
+    // Decode recognition output to string using charDict
+    function decodeRecOutput(output) {
+      // output: ort.Tensor with dims [1, seqLen, numClasses]
+      const [b, seqLen, numClasses] = output.dims;
+      const data = output.data;
+      
+      // Debug logging
+      console.log('Recognition output dims:', output.dims);
+      console.log('charDict length:', charDict.length);
+      console.log('numClasses:', numClasses);
+      
+      let text = '';
+      let lastIdx = -1;
+      let confidSum = 0;
+      let confidCount = 0;
+      const indices = []; // Track indices for debugging
+      
+      for (let t = 0; t < seqLen; t++) {
+        let maxVal = -Infinity;
+        let maxIdx = 0;
+        for (let c = 0; c < numClasses; c++) {
+          const val = data[t * numClasses + c];
+          if (val > maxVal) {
+            maxVal = val;
+            maxIdx = c;
+          }
+        }
+        // index 0 is assumed blank
+        if (maxIdx !== 0 && maxIdx !== lastIdx) {
+          indices.push(maxIdx);
+          // Adjust index mapping: maxIdx - 2 (blank class at 0, and possible header line in dict)
+          const dictIdx = maxIdx - 2;
+          const char = dictIdx >= 0 ? (charDict[dictIdx] || '') : '';
+          if (!char && maxIdx > 1) {
+            console.warn(`Missing character for dict index ${dictIdx} (maxIdx: ${maxIdx})`);
+          }
+          text += char;
+          confidSum += maxVal;
+          confidCount++;
+        }
+        lastIdx = maxIdx;
+      }
+      
+      console.log('Decoded indices:', indices);
+      console.log('Decoded text:', text);
+      
+      const confidence = confidCount > 0 ? (confidSum / confidCount) : 0;
+      return { text, confidence };
+    }
+
+    // Main OCR function
+    async function performOCR() {
+      if (!imgElement || !detSession || !recSession) {
+        return;
+      }
+      runButton.disabled = true;
+      runButton.classList.add('processing');
+      runButton.textContent = '辨識中...';
+      statusSpan.textContent = 'Loading...';
+      progressSpan.textContent = '正在偵測文字框...';
+      fullTextTa.value = '';
+      resultTableBody.innerHTML = '';
+      try {
+        // Preprocess for detection
+        const { floatArray, newW, newH, origW, origH } = preprocessForDet(originalImage);
+        const detInputName = detSession.inputNames[0];
+        const detTensor = new ort.Tensor('float32', floatArray, [1, 3, newH, newW]);
+        // Run detection
+        const detRes = await detSession.run({ [detInputName]: detTensor });
+        const detOutName = detSession.outputNames[0];
+        const detOutput = detRes[detOutName];
+        // detOutput dims: [1, 1, outH, outW]
+        const outH = detOutput.dims[2];
+        const outW = detOutput.dims[3];
+        // Flatten detection map to 1D array of length outH*outW
+        const detMap = detOutput.data;
+        // Extract boxes
+        const boxes = extractBoxes(detMap, newW, newH, outW, outH);
+        // Map boxes to original image coordinates
+        const ratioXorig = newW / origW;
+        const ratioYorig = newH / origH;
+        const mappedBoxes = boxes.map(b => ({
+          x0: b.x0 / ratioXorig,
+          y0: b.y0 / ratioYorig,
+          x1: b.x1 / ratioXorig,
+          y1: b.y1 / ratioYorig
+        }));
+        
+        progressSpan.textContent = `找到 ${mappedBoxes.length} 個文字框，開始辨識...`;
+        
+        // Draw image to canvas
+        canvas.width = origW;
+        canvas.height = origH;
+        ctx.drawImage(imgElement, 0, 0, origW, origH);
+        // Set stroke style for boxes
+        ctx.strokeStyle = 'rgba(255,0,0,0.8)';
+        ctx.lineWidth = Math.max(1, Math.round(Math.min(origW, origH) / 400));
+        ctx.font = `${Math.round(Math.min(origW, origH) / 40)}px sans-serif`;
+        ctx.fillStyle = 'rgba(255,0,0,0.8)';
+        // Recognize each box
+        let fullText = '';
+        for (let i = 0; i < mappedBoxes.length; i++) {
+          progressSpan.textContent = `辨識中 ${i + 1}/${mappedBoxes.length}...`;
+          
+          const box = mappedBoxes[i];
+          // Crop region from original image into offscreen canvas
+          const w = Math.max(1, Math.floor(box.x1 - box.x0));
+          const h = Math.max(1, Math.floor(box.y1 - box.y0));
+          if (w < 2 || h < 2) continue;
+          const regionCanvas = document.createElement('canvas');
+          regionCanvas.width = w;
+          regionCanvas.height = h;
+          const rctx = regionCanvas.getContext('2d');
+          rctx.drawImage(imgElement, box.x0, box.y0, w, h, 0, 0, w, h);
+          // Preprocess region for recognition
+          const { outArr: recArr } = preprocessForRec(regionCanvas);
+          const recTensor = new ort.Tensor('float32', recArr, [1, 3, 48, 320]);
+          const recInputName = recSession.inputNames[0];
+          const recRes = await recSession.run({ [recInputName]: recTensor });
+          const recOutName = recSession.outputNames[0];
+          const recOutput = recRes[recOutName];
+          const { text, confidence } = decodeRecOutput(recOutput);
+          if (text) {
+            fullText += text + '\n';
+          }
+          // Draw bounding box and label
+          ctx.beginPath();
+          ctx.rect(box.x0, box.y0, w, h);
+          ctx.stroke();
+          ctx.fillText(text, box.x0, box.y0 - 2);
+          // Append to table
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(text)}</td><td>${(confidence*100).toFixed(1)}%</td><td>${box.x0.toFixed(1)}, ${box.y0.toFixed(1)}, ${box.x1.toFixed(1)}, ${box.y1.toFixed(1)}</td>`;
+          resultTableBody.appendChild(tr);
+          await new Promise(resolve => setTimeout(resolve, 0)); // yield to UI
+        }
+        fullTextTa.value = fullText.trim();
+        statusSpan.textContent = `完成，檢出 ${mappedBoxes.length} 個框`;
+      } catch (e) {
+        console.error('OCR 執行錯誤', e);
+        statusSpan.textContent = 'OCR 執行錯誤';
+      } finally {
+        progressSpan.textContent = '';
+        runButton.disabled = false;
+        runButton.classList.remove('processing');
+        runButton.textContent = '偵測文字';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        '\'': '&#39;'
+      })[c]);
+    }
+
+    // Handle image input change
+    imageInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      statusSpan.textContent = '讀取圖片...';
+      runButton.disabled = true;
+      resultTableBody.innerHTML = '';
+      fullTextTa.value = '';
+      const url = URL.createObjectURL(file);
+      imgElement = new Image();
+      imgElement.onload = async () => {
+        originalImage = await createImageBitmap(file);
+        // Draw preview
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        ctx.drawImage(imgElement, 0, 0);
+        statusSpan.textContent = '圖片已載入';
+        maybeEnableRun();
+      };
+      imgElement.src = url;
+    });
+
+    // Handle run button click
+    runButton.addEventListener('click', () => {
+      if (!modelsReady) {
+        statusSpan.textContent = '模型尚未載入完成';
+        return;
+      }
+      if (!cvReady) {
+        statusSpan.textContent = 'OpenCV 尚未初始化';
+        return;
+      }
+      performOCR();
+    });
+
+    // Initialize everything
+    (async () => {
+      // Wait for ORT and OpenCV ready
+      await cvReadyPromise;
+      // Initialize models
+      await initModels();
+    })();
+  </script>
+
+</body></html>
